@@ -2,47 +2,46 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Панель управления</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard</title>
     <style>
         body { margin: 0; font-family: sans-serif; background: #0d1117; color: #c9d1d9; display: flex; height: 100vh; }
+        .sidebar { width: 60px; background: #161b22; border-right: 1px solid #30363d; display: none; flex-direction: column; align-items: center; padding-top: 20px; }
+        .main { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center; }
         
-        /* Боковая панель */
-        .sidebar { width: 220px; background: #161b22; border-right: 1px solid #30363d; display: flex; flex-direction: column; padding: 20px; }
-        .sidebar h2 { font-size: 18px; color: #f0f6fc; margin-bottom: 20px; }
-        .menu-btn { background: transparent; border: 1px solid #30363d; color: #c9d1d9; padding: 10px; margin: 5px 0; border-radius: 6px; cursor: pointer; text-align: left; }
-        .menu-btn:hover { background: #30363d; }
+        input { width: 100%; max-width: 300px; padding: 12px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #30363d; background: #0d1117; color: white; }
+        button { width: 100%; max-width: 300px; padding: 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; background: #238636; color: white; }
         
-        /* Основной контент */
-        .main { flex: 1; padding: 40px; }
-        .user-card { background: #161b22; padding: 20px; border: 1px solid #30363d; border-radius: 6px; width: fit-content; }
-        .btn-logout { background: #da3633; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+        #reg-screen { display: none; }
     </style>
 </head>
 <body>
 
-<div class="sidebar" id="sidebar" style="display:none;">
-    <h2>Меню</h2>
-    <button class="menu-btn">Главная</button>
-    <button class="menu-btn">Профиль</button>
-    <button class="menu-btn">Настройки</button>
+<div class="sidebar" id="sidebar">
+    <div style="font-size: 24px; cursor: pointer;">≡</div>
 </div>
 
 <div class="main">
     <div id="login-screen">
-        <h2>Войти в систему</h2>
-        <button id="google-btn" style="padding: 10px; cursor: pointer;">Войти через Google</button>
+        <h2>Вход</h2>
+        <button id="google-btn">Продолжить с Google</button>
     </div>
 
-    <div id="dashboard" class="user-card" style="display:none;">
-        <h3 id="username"></h3>
-        <p id="user-email"></p>
-        <button class="btn-logout" id="logout-btn">Выйти</button>
+    <div id="reg-screen">
+        <h2>Введите ваш NickName</h2>
+        <input type="text" id="nick-input" placeholder="Ваш никнейм">
+        <button id="save-nick-btn">Сохранить</button>
+    </div>
+
+    <div id="content" style="display:none;">
+        <h2 id="welcome-msg"></h2>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBI0_cJasOJZYKtycOlhLuwwSc2h5buznc",
@@ -53,26 +52,33 @@
         appId: "1:921533837162:web:b642c0692f8401e8bb3f13"
     };
 
-    initializeApp(firebaseConfig);
+    const app = initializeApp(firebaseConfig);
     const auth = getAuth();
+    const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
     document.getElementById('google-btn').onclick = () => signInWithPopup(auth, provider);
-    document.getElementById('logout-btn').onclick = () => signOut(auth);
 
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
         if (user) {
-            document.getElementById('sidebar').style.display = 'flex';
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('dashboard').style.display = 'block';
-            
-            // Берем имя из Google или часть почты, если имени нет
-            document.getElementById('username').innerText = user.displayName || "Пользователь";
-            document.getElementById('user-email').innerText = user.email;
-        } else {
-            document.getElementById('sidebar').style.display = 'none';
-            document.getElementById('login-screen').style.display = 'block';
-            document.getElementById('dashboard').style.display = 'none';
+            const userRef = doc(db, "users", user.uid);
+            const snap = await getDoc(userRef);
+
+            if (!snap.exists()) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('reg-screen').style.display = 'block';
+                document.getElementById('save-nick-btn').onclick = async () => {
+                    const nick = document.getElementById('nick-input').value;
+                    await setDoc(userRef, { nickname: nick });
+                    location.reload();
+                };
+            } else {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('reg-screen').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+                document.getElementById('sidebar').style.display = 'flex';
+                document.getElementById('welcome-msg').innerText = "Привет, " + snap.data().nickname;
+            }
         }
     });
 </script>
