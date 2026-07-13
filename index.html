@@ -2,31 +2,41 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход</title>
+    <title>Панель управления</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: #0d1117; color: #c9d1d9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .box { width: 340px; padding: 20px; border: 1px solid #30363d; border-radius: 6px; background: #161b22; }
-        h2 { text-align: center; color: #f0f6fc; }
-        input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: white; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; margin-top: 10px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
-        .btn-green { background: #238636; color: white; }
-        .btn-white { background: #f0f6fc; color: #161b22; }
+        body { margin: 0; font-family: sans-serif; background: #0d1117; color: #c9d1d9; display: flex; height: 100vh; }
+        
+        /* Боковая панель */
+        .sidebar { width: 220px; background: #161b22; border-right: 1px solid #30363d; display: flex; flex-direction: column; padding: 20px; }
+        .sidebar h2 { font-size: 18px; color: #f0f6fc; margin-bottom: 20px; }
+        .menu-btn { background: transparent; border: 1px solid #30363d; color: #c9d1d9; padding: 10px; margin: 5px 0; border-radius: 6px; cursor: pointer; text-align: left; }
+        .menu-btn:hover { background: #30363d; }
+        
+        /* Основной контент */
+        .main { flex: 1; padding: 40px; }
+        .user-card { background: #161b22; padding: 20px; border: 1px solid #30363d; border-radius: 6px; width: fit-content; }
+        .btn-logout { background: #da3633; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <div id="auth-form">
+<div class="sidebar" id="sidebar" style="display:none;">
+    <h2>Меню</h2>
+    <button class="menu-btn">Главная</button>
+    <button class="menu-btn">Профиль</button>
+    <button class="menu-btn">Настройки</button>
+</div>
+
+<div class="main">
+    <div id="login-screen">
         <h2>Войти в систему</h2>
-        <input type="email" id="email" placeholder="Email">
-        <input type="password" id="password" placeholder="Пароль">
-        <button class="btn-green" id="login-btn">Войти</button>
-        <button class="btn-white" id="google-btn">Продолжить с Google</button>
+        <button id="google-btn" style="padding: 10px; cursor: pointer;">Войти через Google</button>
     </div>
-    <div id="user-profile" style="display:none;">
-        <h2 id="welcome-text"></h2>
-        <button class="btn-green" id="logout-btn">Выйти</button>
+
+    <div id="dashboard" class="user-card" style="display:none;">
+        <h3 id="username"></h3>
+        <p id="user-email"></p>
+        <button class="btn-logout" id="logout-btn">Выйти</button>
     </div>
 </div>
 
@@ -47,22 +57,24 @@
     const auth = getAuth();
     const provider = new GoogleAuthProvider();
 
-    document.getElementById('google-btn').onclick = () => {
-        signInWithPopup(auth, provider).catch(err => alert("Ошибка Firebase: " + err.message));
-    };
+    document.getElementById('google-btn').onclick = () => signInWithPopup(auth, provider);
+    document.getElementById('logout-btn').onclick = () => signOut(auth);
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            document.getElementById('auth-form').style.display = 'none';
-            document.getElementById('user-profile').style.display = 'block';
-            document.getElementById('welcome-text').innerText = "Привет, " + user.email;
+            document.getElementById('sidebar').style.display = 'flex';
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            
+            // Берем имя из Google или часть почты, если имени нет
+            document.getElementById('username').innerText = user.displayName || "Пользователь";
+            document.getElementById('user-email').innerText = user.email;
         } else {
-            document.getElementById('auth-form').style.display = 'block';
-            document.getElementById('user-profile').style.display = 'none';
+            document.getElementById('sidebar').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'block';
+            document.getElementById('dashboard').style.display = 'none';
         }
     });
-
-    document.getElementById('logout-btn').onclick = () => signOut(auth);
 </script>
 </body>
 </html>
