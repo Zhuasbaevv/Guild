@@ -2,29 +2,36 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Мой сайт</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход в аккаунт</title>
+    <style>
+        /* CSS стили для красоты */
+        body { font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f7f6; margin: 0; }
+        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; width: 300px; }
+        button { background: #4285F4; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        button:hover { background: #357ae8; }
+        h1 { font-size: 24px; color: #333; margin-bottom: 20px; }
+    </style>
 </head>
 <body>
 
-    <!-- Секция входа -->
-    <div id="auth-section">
-        <h1>Вход</h1>
-        <button id="login-btn">Войти через Google</button>
+    <div class="card">
+        <div id="auth-section">
+            <h1>Добро пожаловать</h1>
+            <button id="login-btn">Войти через Google</button>
+        </div>
+
+        <div id="profile-section" style="display:none;">
+            <h1>Твой аккаунт</h1>
+            <p id="user-info"></p>
+            <button id="logout-btn">Выйти</button>
+        </div>
     </div>
 
-    <!-- Секция профиля (показывается после входа) -->
-    <div id="profile-section" style="display:none;">
-        <h1>Твой аккаунт</h1>
-        <p id="user-info"></p>
-        <button id="logout-btn">Выйти</button>
-    </div>
-
-    <!-- Подключаем Firebase через модули -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
-        // Твоя конфигурация
         const firebaseConfig = {
             apiKey: "AIzaSyBI0_cJasOJZYKtycOlhLuwwSc2h5buznc",
             authDomain: "my-sait-c7862.firebaseapp.com",
@@ -38,26 +45,17 @@
         const auth = getAuth();
         const provider = new GoogleAuthProvider();
 
-        // Элементы
-        const loginBtn = document.getElementById('login-btn');
-        const logoutBtn = document.getElementById('logout-btn');
-        const authSection = document.getElementById('auth-section');
-        const profileSection = document.getElementById('profile-section');
-        const userInfo = document.getElementById('user-info');
+        document.getElementById('login-btn').onclick = () => signInWithPopup(auth, provider);
+        document.getElementById('logout-btn').onclick = () => signOut(auth);
 
-        // Логика входа
-        loginBtn.onclick = () => signInWithPopup(auth, provider);
-        logoutBtn.onclick = () => signOut(auth);
-
-        // Проверка состояния
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                authSection.style.display = 'none';
-                profileSection.style.display = 'block';
-                userInfo.innerText = `Почта: ${user.email}`;
+                document.getElementById('auth-section').style.display = 'none';
+                document.getElementById('profile-section').style.display = 'block';
+                document.getElementById('user-info').innerText = `Привет, ${user.email}`;
             } else {
-                authSection.style.display = 'block';
-                profileSection.style.display = 'none';
+                document.getElementById('auth-section').style.display = 'block';
+                document.getElementById('profile-section').style.display = 'none';
             }
         });
     </script>
